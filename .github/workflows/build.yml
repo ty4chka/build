@@ -1,0 +1,73 @@
+name: Build XLI Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      goos:
+        description: 'Target OS'
+        required: true
+        default: 'linux'
+        type: choice
+        options:
+          - linux
+          - darwin
+          - windows
+      goarch:
+        description: 'Target Architecture'
+        required: true
+        default: 'amd64'
+        type: choice
+        options:
+          - amd64
+          - arm64
+          - 386
+      ldflags:
+        description: 'Extra ldflags'
+        required: false
+        default: '-s -w'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ github.event.inputs.goos }}
+          GOARCH: ${{ github.event.inputs.goarch }}
+        run: |
+          go build -ldflags="${{ github.event.inputs.ldflags }}" -o xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }} ./cmd/bot
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+          path: xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+
+      - name: Release (optional)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+          tag_name: build-${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
