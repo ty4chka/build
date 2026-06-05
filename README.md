@@ -1,15 +1,27 @@
-# XLI Build Runner
+# XLI Bot 🤖
 
-GitHub Actions runner для компиляции XLI Bot.
+Telegram-бот на Go с AI-агентом.
 
-## Использование
+## Компиляция через GitHub Actions
 
-1. Создай репо на GitHub
-2. Запушь эти файлы
-3. Перейди в Actions → Build XLI Bot → Run workflow
+1. Запушь этот репо на GitHub
+2. Перейди в **Actions** → **Build XLI Bot**
+3. Нажми **Run workflow**
 4. Выбери OS и архитектуру
-5. Скачай артефакт
+5. Скачай готовый бинарник из артефактов
 
-## Триггер из XLI Bot
+## Локальная сборка
 
-Бот может автоматически запускать этот workflow через GitHub API.
+```bash
+cp .env.example .env
+# Отредактируй .env
+go mod tidy
+go build -o xli-bot ./cmd/bot
+./xli-bot
+```
+
+## Для твоего сервера (Termux, ARM64)
+
+```bash
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o xli-bot ./cmd/bot
+```

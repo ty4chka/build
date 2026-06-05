@@ -15,16 +15,12 @@ on:
       goarch:
         description: 'Target Architecture'
         required: true
-        default: 'amd64'
+        default: 'arm64'
         type: choice
         options:
           - amd64
           - arm64
           - 386
-      ldflags:
-        description: 'Extra ldflags'
-        required: false
-        default: '-s -w'
 
 jobs:
   build:
@@ -55,19 +51,10 @@ jobs:
           GOOS: ${{ github.event.inputs.goos }}
           GOARCH: ${{ github.event.inputs.goarch }}
         run: |
-          go build -ldflags="${{ github.event.inputs.ldflags }}" -o xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }} ./cmd/bot
+          go build -ldflags="-s -w" -o xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }} ./cmd/bot
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
           path: xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
-
-      - name: Release (optional)
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: xli-bot-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
-          tag_name: build-${{ github.run_number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
